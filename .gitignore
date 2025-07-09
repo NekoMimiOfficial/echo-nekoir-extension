@@ -7,3 +7,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+helper
+nekey.keystore
+kls_database.db
+.kotlin
