@@ -1,27 +1,15 @@
 package dev.brahmkshatriya.echo.extension
 
-import dev.brahmkshatriya.echo.common.clients.AlbumClient
-import dev.brahmkshatriya.echo.common.clients.ArtistClient
-import dev.brahmkshatriya.echo.common.clients.ArtistFollowClient
 import dev.brahmkshatriya.echo.common.clients.ExtensionClient
 import dev.brahmkshatriya.echo.common.clients.HomeFeedClient
-import dev.brahmkshatriya.echo.common.clients.LibraryFeedClient
-import dev.brahmkshatriya.echo.common.clients.LoginClient
 import dev.brahmkshatriya.echo.common.clients.LyricsClient
-import dev.brahmkshatriya.echo.common.clients.PlaylistClient
 import dev.brahmkshatriya.echo.common.clients.PlaylistEditClient
-import dev.brahmkshatriya.echo.common.clients.RadioClient
 import dev.brahmkshatriya.echo.common.clients.SearchFeedClient
 import dev.brahmkshatriya.echo.common.clients.TrackClient
 import dev.brahmkshatriya.echo.common.clients.TrackLikeClient
 import dev.brahmkshatriya.echo.common.helpers.PagedData
-import dev.brahmkshatriya.echo.common.models.Album
-import dev.brahmkshatriya.echo.common.models.Artist
-import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Lyrics
-import dev.brahmkshatriya.echo.common.models.Playlist
 import dev.brahmkshatriya.echo.common.models.QuickSearchItem
-import dev.brahmkshatriya.echo.common.models.Radio
 import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.common.models.Tab
@@ -31,10 +19,6 @@ import dev.brahmkshatriya.echo.common.models.Feed
 import dev.brahmkshatriya.echo.common.settings.Setting
 import dev.brahmkshatriya.echo.common.settings.Settings
 import dev.brahmkshatriya.echo.common.settings.SettingTextInput
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.withContext
 import dev.brahmkshatriya.echo.extension.Screens.createHomeFeed
 import dev.brahmkshatriya.echo.extension.Screens.searchTrack
 import dev.brahmkshatriya.echo.extension.Screens.searchAlbum
@@ -48,9 +32,6 @@ class NekoirMain :
   ExtensionClient,
   SearchFeedClient,
   TrackClient{
-
-  val ui by lazy { UiBuilder() }
-  val api by lazy { ApiService() }
 
   // Settings fraq
   override suspend fun onExtensionSelected() {}
@@ -69,6 +50,9 @@ class NekoirMain :
     get() = setting.getString(SETTINGS_DEVICE_ID_KEY).orEmpty().ifBlank {
       randomString().also { setting.putString(SETTINGS_DEVICE_ID_KEY, it) }
     }
+  
+  val ui by lazy { UiBuilder() }
+  val api by lazy { ApiService(setting) }
   // ---------------------------------------------------
 
   // Home Feed Frag
@@ -120,7 +104,7 @@ class NekoirMain :
     saveQueryToHistory(query)
 
     return when (tab?.id) {
-      "tracks" -> searchTrack(query)
+      "tracks" -> searchTrack(query, setting)
       "albums" -> searchAlbum(query)
       else -> throw IllegalArgumentException("Invalid search tab")
     }

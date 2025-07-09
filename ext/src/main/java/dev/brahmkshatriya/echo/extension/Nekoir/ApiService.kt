@@ -29,6 +29,7 @@ import kotlin.collections.emptyList
 import java.io.IOException
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.common.models.ImageHolder
+import dev.brahmkshatriya.echo.common.settings.Settings
 import dev.brahmkshatriya.echo.extension.deserializeJsonStringToJsonObject
 
 private val DEFAULT_CACHE_CONTROL = CacheControl.Builder().maxAge(10, MINUTES).build()
@@ -37,17 +38,17 @@ private val DEFAULT_BODY: RequestBody = FormBody.Builder().build()
 
 const val TICKS_PER_MS = 10_000
 
-private val BASE_API= getBaseApi()
-
-private val SEARCH_ENDPOINT: String= BASE_API+"search"
-private val TRACK_ENDPOINT: String= BASE_API+"track/playback"
-private val ALBUM_ENDPOINT: String= BASE_API+"album/tracks"
-private val META_ENDPOINT: String= BASE_API+"track/metadata"
-
-private val HEADERS= Headers.headersOf("User-Agent", "ktor-client", "X-App-Version", "1.8")
-
-class ApiService
+class ApiService (settings: Settings)
 {
+  private val BASE_API= getBaseApi(settings)
+
+  private val SEARCH_ENDPOINT: String= BASE_API+"search"
+  private val TRACK_ENDPOINT: String= BASE_API+"track/playback"
+  private val ALBUM_ENDPOINT: String= BASE_API+"album/tracks"
+  private val META_ENDPOINT: String= BASE_API+"track/metadata"
+
+  private val HEADERS= Headers.headersOf("User-Agent", "ktor-client", "X-App-Version", "1.8")
+
   val client= OkHttpClient.Builder()
     .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
     .readTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
@@ -93,14 +94,20 @@ class ApiService
     return res.body?.string() ?: "Some error occured: ${res.code}"
   }
 
-  fun album()
-  {}
+  fun album(album_id: String): String
+  {
+    val getParam= buildJsonObject { put("id", album_id) }
+    val res= getResp(client, ALBUM_ENDPOINT, getParam)
+    return res.body?.string() ?: "Some error occured: ${res.code}"
+  }
 
   fun metadata()
   {}
 
-  fun lyrics()
-  {}
+  fun lyrics(metadata: String): String
+  {
+    return "[00:01.00] Yo we're J!"
+  }
 
   suspend fun getTrack(track: Track): Track
   {

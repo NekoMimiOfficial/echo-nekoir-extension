@@ -12,6 +12,7 @@ import dev.brahmkshatriya.echo.extension.Nekoir.constructTrackItem
 import dev.brahmkshatriya.echo.extension.Nekoir.ApiService
 import dev.brahmkshatriya.echo.extension.Screens.searchTrack
 import dev.brahmkshatriya.echo.extension.randomString
+import dev.brahmkshatriya.echo.common.settings.Settings
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -145,9 +146,9 @@ class UiBuilder
     )
   }
 
-  fun getSearchFeedFor(term: String): Shelf
+  fun getSearchFeedFor(term: String, settings: Settings): Shelf
   {
-    val api= ApiService()
+    val api= ApiService(settings)
     val searchReq= api.search(term)
     val reqJson: List<JsonObject>? = deserializeJsonStringToListOfJsonObjects(searchReq)
     var titles: MutableList<String> = mutableListOf()

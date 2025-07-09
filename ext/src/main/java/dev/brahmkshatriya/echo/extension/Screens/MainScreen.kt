@@ -4,6 +4,7 @@ import dev.brahmkshatriya.echo.common.helpers.PagedData
 import dev.brahmkshatriya.echo.common.models.Feed
 import dev.brahmkshatriya.echo.common.models.Feed.Companion.toFeed
 import dev.brahmkshatriya.echo.common.models.Shelf
+import dev.brahmkshatriya.echo.common.settings.Settings
 import dev.brahmkshatriya.echo.extension.NekoirMain
 import kotlinx.coroutines.Dispatchers
 import dev.brahmkshatriya.echo.extension.UiBuilder
@@ -17,9 +18,9 @@ fun createHomeFeed(): Feed {
   return pd.toFeed()
 }
 
-fun searchTrack(query: String): Feed
+fun searchTrack(query: String, settings: Settings): Feed
 {
-  val pd= PagedData.Single{listOf(ui.getSearchFeedFor(query))}
+  val pd= PagedData.Single{listOf(ui.getSearchFeedFor(query, settings))}
   return pd.toFeed()
 }
 

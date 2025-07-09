@@ -49,10 +49,8 @@ fun String.getImageUrl(
 
 fun deserializeJsonStringToJsonObject(jsonString: String): JsonObject? {
     return try {
-        // First, parse the string into a generic JsonElement.
         val jsonElement = json.parseToJsonElement(jsonString)
 
-        // Check if the parsed element is actually a JsonObject
         if (jsonElement is JsonObject) {
             jsonElement
         } else {
