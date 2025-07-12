@@ -128,8 +128,9 @@ class ApiService (settings: Settings)
   {
     var url: String = ""
     var qt: String = "LOSSLESS"
-    if (streamable.quality > 44100)
-    {qt= "HIRES_LOSSLESS"}
+    // For now we will revert this as wtf does the API even spit?
+    // if (streamable.quality > 44100)
+    // {qt= "HI_RES_LOSSLESS"}
     var getRequest= track(streamable.id, qt)
     while (getRequest.contains("detail") || getRequest.contains("[]"))
     {getRequest= track(streamable.id, qt)}
