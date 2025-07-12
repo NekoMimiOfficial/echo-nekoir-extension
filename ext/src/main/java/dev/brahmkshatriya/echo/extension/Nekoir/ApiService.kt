@@ -111,7 +111,7 @@ class ApiService (settings: Settings)
 
   suspend fun getTrack(track: Track): Track
   {
-    val bigCoverImgUrl= track.extras["image"] ?: "http://nekomimi.tilde.team/pool/05/missingno.png"
+    val bigCoverImgUrl= track.extras["image"] ?: "/"
     val thumb= ImageHolder.UriImageHolder(uri= bigCoverImgUrl, crop= false)
     val final_track= Track (
       id= track.id,
@@ -126,28 +126,25 @@ class ApiService (settings: Settings)
 
   suspend fun getStreamableMedia(streamable: Streamable): Streamable.Media
   {
-    val tryCacheUrl= streamable.extras["url"]
     var url: String = ""
-    if (tryCacheUrl == null || tryCacheUrl == "" || !tryCacheUrl.startsWith("https://lgf") || streamable.extras.isNullOrEmpty())
-    {
-      println("URL not passed, getting URL")
-      val getRequest= track(streamable.id, "LOSSLESS")
-      val trackJson: JsonObject? = deserializeJsonStringToJsonObject(getRequest)
+    var qt: String = "LOSSLESS"
+    if (streamable.quality > 44100)
+    {qt= "HIRES_LOSSLESS"}
+    var getRequest= track(streamable.id, qt)
+    while (getRequest.contains("detail") || getRequest.contains("[]"))
+    {getRequest= track(streamable.id, qt)}
+    val trackJson: JsonObject? = deserializeJsonStringToJsonObject(getRequest)
 
-      if (trackJson != null)
+    if (trackJson != null)
+    {
+      val jsonArrayElement = trackJson["urls"]?.jsonArray
+      if (jsonArrayElement != null && jsonArrayElement.isNotEmpty())
       {
-        val jsonArrayElement = trackJson["urls"]?.jsonArray
-        if (jsonArrayElement != null && jsonArrayElement.isNotEmpty())
-        {
-          val firstElementOfStringArray = jsonArrayElement[0].jsonPrimitive.content
-          url= firstElementOfStringArray
-          print(url)
-        }else{println("very fucked up response boogaloo")}
-      }else{println("api has sent shart up its ahh")}
-    }else{
-      url= streamable.extras["url"] ?: "error"
-      println("Using passed URL: $url")
-    } 
+        val firstElementOfStringArray = jsonArrayElement[0].jsonPrimitive.content
+        url= firstElementOfStringArray
+        print(url)
+      }else{println("Track ID: ${streamable.id} has returned an empty request")}
+    }else{println("Track ID: ${streamable.id} has not returned a request")}
 
     return Streamable.Source.Http(
       request= url.toRequest(),

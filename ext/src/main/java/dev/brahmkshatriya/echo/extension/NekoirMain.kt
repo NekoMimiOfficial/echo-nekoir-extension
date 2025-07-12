@@ -60,7 +60,7 @@ class NekoirMain :
   {return emptyList()}
 
   override fun getHomeFeed(tab: Tab?): Feed
-  {return createHomeFeed()}
+  {return createHomeFeed(setting)}
   // ---------------------------------------------------
   
   // Search Frag
@@ -105,7 +105,7 @@ class NekoirMain :
 
     return when (tab?.id) {
       "tracks" -> searchTrack(query, setting)
-      "albums" -> searchAlbum(query)
+      "albums" -> searchAlbum(query, setting)
       else -> throw IllegalArgumentException("Invalid search tab")
     }
   }

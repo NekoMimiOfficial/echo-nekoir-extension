@@ -12,30 +12,27 @@ fun constructTrackItem
 (
   title: String,
   id: String,
-  artists: List<Artist> = emptyList(),
+  cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png",
+  qualities: List<Int> = listOf(44100),
   d_min: Int = 0,
   d_sec: Int = 39,
-  urls: List<String> = listOf(""),
-  qualities: List<Int> = listOf(44100),
-  cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png",
-  big_cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png"
+  artists: List<Artist> = emptyList(),
 ): EchoMediaItem
 {
   val thumb= ImageHolder.UriImageHolder(uri= cover, crop= false)
   val duration = 1000 * ( 60 * d_min + d_sec )
   val streams: MutableList<Streamable> = mutableListOf()
 
-  var internal_quality: String = "Lossless"
-  if (qualities[0] > 44100) {internal_quality= "HiRes Lossless"}
-  val s1= Streamable(
-    id= id,
-    quality= qualities[0],
-    type= Streamable.MediaType.Server,
-    title= internal_quality,
-    extras= mapOf( Pair("url", urls[0]) )
-  )
+  for (quality in qualities)
+  {
+    var internal_quality: String = "Lossless"
+    if (quality > 44100) {internal_quality= "HiRes Lossless"}
+    val streamable= Streamable(id= id, title= internal_quality,
+      type= Streamable.MediaType.Server, quality= quality)
 
-  streams.add(s1)
+    streams.add(streamable)
+  }
+
   val track= Track(
     id= id,
     title= title,
@@ -43,7 +40,7 @@ fun constructTrackItem
     duration= duration.toLong(),
     cover= thumb,
     streamables= streams,
-    extras= mapOf( Pair("image", big_cover) )
+    extras= mapOf( Pair("image", cover.replace("80x80.", "1280x1280.")) )
   )
 
   return track.toMediaItem()
