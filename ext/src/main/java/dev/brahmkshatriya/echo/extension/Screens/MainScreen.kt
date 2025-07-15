@@ -21,7 +21,7 @@ fun createHomeFeed(settings: Settings): Feed {
 
 fun searchTrack(query: String, settings: Settings): Feed
 {
-  val pd= PagedData.Single{listOf(ui.getSearchFeedFor(query, settings))}
+  val pd= PagedData.Single{ui.getSearchHor(query, settings)}
   return pd.toFeed()
 }
 

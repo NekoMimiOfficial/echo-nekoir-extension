@@ -11,6 +11,7 @@ import kotlinx.serialization.json.put
 import okhttp3.RequestBody.Companion.toRequestBody
 import dev.brahmkshatriya.echo.extension.DataStore.getBaseApi
 import dev.brahmkshatriya.echo.common.helpers.ContinuationCallback.Companion.await
+import dev.brahmkshatriya.echo.common.helpers.PagedData
 import dev.brahmkshatriya.echo.common.models.Request.Companion.toRequest
 import dev.brahmkshatriya.echo.common.models.Streamable.Media.Companion.toMedia
 import dev.brahmkshatriya.echo.common.models.Streamable
@@ -29,6 +30,7 @@ import kotlin.collections.emptyList
 import java.io.IOException
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.common.models.ImageHolder
+import dev.brahmkshatriya.echo.common.models.Lyrics
 import dev.brahmkshatriya.echo.common.settings.Settings
 import dev.brahmkshatriya.echo.extension.deserializeJsonStringToJsonObject
 
@@ -101,12 +103,37 @@ class ApiService (settings: Settings)
     return res.body?.string() ?: "Some error occured: ${res.code}"
   }
 
-  fun metadata()
-  {}
-
-  fun lyrics(metadata: String): String
+  fun metadata(track_id: String): String
   {
-    return "[00:01.00] Yo we're J!"
+    val getParam= buildJsonObject { put("id", track_id) }
+    val res= getResp(client, META_ENDPOINT, getParam)
+    return res.body?.string() ?: "Some error occured: ${res.code}"
+  }
+
+  fun getLyrics(track: Track): PagedData<Lyrics>
+  {
+    val track_id= track.id
+    var lyrics= "Loading..."
+    var getReq= metadata(track_id)
+    var jabba= deserializeJsonStringToJsonObject(getReq)
+    while (jabba == null && getReq.contains("{\"detail\""))
+    {
+      getReq= metadata(track_id)
+      jabba= deserializeJsonStringToJsonObject(getReq)
+    }
+    if (jabba != null)
+    {if (jabba.containsKey("LYRICS")){lyrics= jabba["LYRICS"]?.jsonPrimitive?.content ?: "Failed to load!"}}
+    val list: List<Lyrics.Item> = emptyList()
+    val retList= PagedData.Single{
+      listOf(
+        Lyrics(
+          id= "lyrics",
+          title= "Lyrics",
+          lyrics= Lyrics.Timed(list)
+        )
+      )
+    }
+    return retList
   }
 
   suspend fun getTrack(track: Track): Track

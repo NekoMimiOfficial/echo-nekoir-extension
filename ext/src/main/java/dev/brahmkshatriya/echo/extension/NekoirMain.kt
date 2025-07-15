@@ -31,6 +31,7 @@ class NekoirMain :
   HomeFeedClient,
   ExtensionClient,
   SearchFeedClient,
+  LyricsClient,
   TrackClient{
 
   // Settings fraq
@@ -129,6 +130,18 @@ class NekoirMain :
   override fun getShelves(track: Track): PagedData<Shelf>
   {
     return PagedData.Single { emptyList() }
+  }
+  // --------------------------------------------------
+  
+  // Lyrics Frag
+  override fun searchTrackLyrics(clientId: String, track: Track): PagedData<Lyrics>
+  {
+    return api.getLyrics(track)
+  }
+
+  override suspend fun loadLyrics(lyrics: Lyrics): Lyrics
+  {
+    return lyrics
   }
   // --------------------------------------------------
 }

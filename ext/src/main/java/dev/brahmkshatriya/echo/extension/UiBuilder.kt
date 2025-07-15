@@ -24,7 +24,7 @@ import kotlin.collections.listOf
 
 class UiBuilder
 {
-  fun getSearchFeedFor(term: String, settings: Settings, ident: String = "Search results for:", force: Boolean = false): Shelf
+  fun itemGetter(term: String, settings: Settings, force: Boolean = false): List<EchoMediaItem>
   {
     val api= ApiService(settings)
     var searchReq= api.search(term)
@@ -32,6 +32,7 @@ class UiBuilder
     var covers: MutableList<String> = mutableListOf()
     var items: MutableList<EchoMediaItem> = mutableListOf()
     var ids: MutableList<String> = mutableListOf()
+    var timestamps: MutableList<String> = mutableListOf()
     var formats: MutableList<MutableList<Int>> = mutableListOf()
 
     while (searchReq.contains("{\"detail\"") || force && searchReq.contains("[]"))
@@ -57,6 +58,11 @@ class UiBuilder
           ids.add(id)
         }
 
+        if (jsonObject.containsKey("duration")) {
+          val dur= jsonObject["duration"]?.jsonPrimitive?.content ?: "0:39"
+          timestamps.add(dur)
+        }
+
         if (jsonObject.containsKey("formats")) {
           val arrayItemsFormats= jsonObject["formats"]?.jsonArray?.map {it.jsonPrimitive.content}
           var fmt: MutableList<Int> = mutableListOf()
@@ -72,26 +78,51 @@ class UiBuilder
 
     for (i in 0..titles.size-1)
     {
+      val time_m= timestamps[i].split(":")[0].toInt()
+      val time_s= timestamps[i].split(":")[1].toInt()
       val item= constructTrackItem(
         titles[i],
         ids[i],
         covers[i],
         formats[i],
+        time_m,
+        time_s
       )
 
       items.add(item)
     }
+    return items
+  }
+
+  fun getSearchFeedFor(term: String, settings: Settings, ident: String = "Search results for:", force: Boolean = false): Shelf
+  {
+    val items= itemGetter(term, settings, force)
     return Shelf.Lists.Items(
       title= "$ident $term",
       list= items
     )
   }
 
+  fun getSearchHor(term: String, settings: Settings, force: Boolean = false): List<Shelf>
+  {
+    var horter: MutableList<Shelf> = mutableListOf()
+    val items= itemGetter(term, settings, force)
+    for (item in items)
+    {
+      horter.add(Shelf.Item(media= item))
+    }
+    return horter
+  }
+
+
   fun getRandomShelves(settings: Settings): List<Shelf>
   {
     val eastern: List<String> = listOf(
       "YOASOBI",
       "ZUTOMAYO",
+      "Deco*27",
+      "Deco*27",
+      "Deco*27",
       "Deco*27",
       "Ui Shigure",
       "kenshi",
@@ -101,12 +132,17 @@ class UiBuilder
       "rainych",
       "fuji kaze",
       "Mrs. Green Apple",
-      "THE ORAL CIGARETTES"
+      "Mafumafu",
+      "THE ORAL CIGARETTES",
     )
 
     val mosika: List<String> = listOf(
       "Polyphia",
-      "porter robinson"
+      "Joe Satriani",
+      "Ratatat",
+      "Stars of the lid",
+      "Snail's House",
+      "Animals as Leaders"
     )
 
     val western: List<String> = listOf(
@@ -125,17 +161,27 @@ class UiBuilder
       "Gipsy Kings"
     )
 
+    val niche: List<String> = listOf(
+      "porter robinson",
+      "heiakim",
+      "OMFG",
+      "Moe Shop",
+      "Dion Timmer"
+    )
+
     val s1= eastern.random()
     val s2= western.random()
     val s3= mosika.random()
     val s4= foreign.random()
+    val s5= niche.random()
 
     val sh1= getSearchFeedFor(s1, settings, "Random Eastern Pick:", true)
     val sh2= getSearchFeedFor(s2, settings, "Random Western Pick:", true)
     val sh3= getSearchFeedFor(s3, settings, "Random Instrumental:", true)
     val sh4= getSearchFeedFor(s4, settings, "Random Cultural Pick:", true)
+    val sh5= getSearchFeedFor(s5, settings, "Random Half Vocal Pick:", true)
 
-    val randFeed: List<Shelf> = listOf(sh1, sh2, sh3, sh4)
+    val randFeed: List<Shelf> = listOf(sh1, sh2, sh3, sh4, sh5)
     return randFeed
   }
 }
