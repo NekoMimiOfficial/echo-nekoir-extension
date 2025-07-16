@@ -9,19 +9,16 @@ import dev.brahmkshatriya.echo.extension.NekoirMain
 import kotlinx.coroutines.Dispatchers
 import dev.brahmkshatriya.echo.extension.UiBuilder
 
-val ui= UiBuilder()
+val ui = UiBuilder()
 
 fun createHomeFeed(settings: Settings): Feed {
-  val pd= PagedData.Single{ ui.getRandomShelves(settings) }
-  return pd.toFeed()
+  return PagedData.Single{ ui.getRandomShelves(settings) }.toFeed()
 }
 
 fun searchTrack(query: String, settings: Settings): Feed {
-  val pd= PagedData.Single{ ui.getSearchHor(query, settings) }
-  return pd.toFeed()
+  return PagedData.Single{ ui.getSearchHor(query, settings) }.toFeed()
 }
 
 fun searchAlbum(query: String, settings: Settings): Feed {
-  val pd= PagedData.Single{ ui.getSearchHor(query, settings) }
-  return pd.toFeed()
+  return PagedData.Single{ ui.getSearchHor(query, settings) }.toFeed()
 }

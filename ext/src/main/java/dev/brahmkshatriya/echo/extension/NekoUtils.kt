@@ -28,6 +28,14 @@ fun randomString(length: Int = 16): String {
     }
 }
 
+fun safeGet(key: String, jobj: JsonObject, errorHandle: String = "error getting key: $key"): String {
+  if (jobj.containsKey(key)) {
+    return jobj[key]?.jsonPrimitive?.content ?: errorHandle
+  } else {
+    return errorHandle
+  }
+}
+
 fun deserializeJsonStringToJsonObject(jsonString: String): JsonObject? {
     return try {
         val jsonElement = json.parseToJsonElement(jsonString)

@@ -30,14 +30,14 @@ fun constructTrackItem(
     streams.add(streamable)
   }
 
-  val track= Track(
-    id= id,
-    title= title,
-    artists= artists,
-    duration= duration.toLong(),
-    cover= thumb,
-    streamables= streams,
-    extras= mapOf( Pair("image", cover.replace("80x80.", "1280x1280.")) )
+  val track = Track(
+    id = id,
+    title = title,
+    artists = artists,
+    duration = duration.toLong(),
+    cover = thumb,
+    streamables = streams,
+    extras = mapOf( Pair("image", cover.replace("80x80.", "1280x1280.")) )
   )
 
   return track.toMediaItem()
@@ -48,11 +48,11 @@ fun constructAlbumItem(
   id: String,
   cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png"
 ): EchoMediaItem.Lists.AlbumItem {
-  val thumb= ImageHolder.UriImageHolder(uri= cover, crop= false)
+  val thumb = ImageHolder.UriImageHolder(uri= cover, crop= false)
 
   return Album(
-    title= title,
-    id= id,
-    cover= thumb
+    title = title,
+    id = id,
+    cover = thumb
   ).toMediaItem()
 }
