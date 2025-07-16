@@ -22,10 +22,8 @@ import kotlin.collections.mutableListOf
 import kotlin.collections.emptyList
 import kotlin.collections.listOf
 
-class UiBuilder
-{
-  fun itemGetter(term: String, settings: Settings, force: Boolean = false): List<EchoMediaItem>
-  {
+class UiBuilder {
+  fun itemGetter(term: String, settings: Settings, force: Boolean = false): List<EchoMediaItem> {
     val api= ApiService(settings)
     var searchReq= api.search(term)
     var titles: MutableList<String> = mutableListOf()
@@ -35,8 +33,9 @@ class UiBuilder
     var timestamps: MutableList<String> = mutableListOf()
     var formats: MutableList<MutableList<Int>> = mutableListOf()
 
-    while (searchReq.contains("{\"detail\"") || force && searchReq.contains("[]"))
-    {searchReq= api.search(term)}
+    while (searchReq.contains("{\"detail\"") || force && searchReq.contains("[]")) {
+      searchReq= api.search(term)
+    }
 
     val reqJson: List<JsonObject>? = deserializeJsonStringToListOfJsonObjects(searchReq)
 
@@ -66,8 +65,7 @@ class UiBuilder
         if (jsonObject.containsKey("formats")) {
           val arrayItemsFormats= jsonObject["formats"]?.jsonArray?.map {it.jsonPrimitive.content}
           var fmt: MutableList<Int> = mutableListOf()
-          if (arrayItemsFormats != null)
-          {
+          if (arrayItemsFormats != null) {
             for (forma in arrayItemsFormats)
             {if (forma.startsWith("HIRES")) {fmt.add(96000)}else{fmt.add(44100)}}
           }
@@ -76,8 +74,7 @@ class UiBuilder
       }
     }
 
-    for (i in 0..titles.size-1)
-    {
+    for (i in 0..titles.size-1) {
       val time_m= timestamps[i].split(":")[0].toInt()
       val time_s= timestamps[i].split(":")[1].toInt()
       val item= constructTrackItem(
@@ -94,8 +91,7 @@ class UiBuilder
     return items
   }
 
-  fun getSearchFeedFor(term: String, settings: Settings, ident: String = "Search results for:", force: Boolean = false): Shelf
-  {
+  fun getSearchFeedFor(term: String, settings: Settings, ident: String = "Search results for:", force: Boolean = false): Shelf {
     val items= itemGetter(term, settings, force)
     return Shelf.Lists.Items(
       title= "$ident $term",
@@ -103,20 +99,17 @@ class UiBuilder
     )
   }
 
-  fun getSearchHor(term: String, settings: Settings, force: Boolean = false): List<Shelf>
-  {
+  fun getSearchHor(term: String, settings: Settings, force: Boolean = false): List<Shelf> {
     var horter: MutableList<Shelf> = mutableListOf()
     val items= itemGetter(term, settings, force)
-    for (item in items)
-    {
+    for (item in items) {
       horter.add(Shelf.Item(media= item))
     }
     return horter
   }
 
 
-  fun getRandomShelves(settings: Settings): List<Shelf>
-  {
+  fun getRandomShelves(settings: Settings): List<Shelf> {
     val eastern: List<String> = listOf(
       "YOASOBI",
       "ZUTOMAYO",

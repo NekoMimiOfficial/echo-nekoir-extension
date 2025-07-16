@@ -57,11 +57,13 @@ class NekoirMain :
   // ---------------------------------------------------
 
   // Home Feed Frag
-  override suspend fun getHomeTabs(): List<Tab>
-  {return emptyList()}
+  override suspend fun getHomeTabs(): List<Tab> {
+    return emptyList()
+  }
 
-  override fun getHomeFeed(tab: Tab?): Feed
-  {return createHomeFeed(setting)}
+  override fun getHomeFeed(tab: Tab?): Feed {
+    return createHomeFeed(setting)
+  }
   // ---------------------------------------------------
   
   // Search Frag
@@ -72,15 +74,13 @@ class NekoirMain :
     set(value) = setting.putString(SETTINGS_HISTORY_KEY,
     value.joinToString(","))
 
-  private fun saveQueryToHistory(query: String)
-  {
+  private fun saveQueryToHistory(query: String) {
     val history = searchHistory.toMutableList()
     history.add(0, query)
     searchHistory = history
   }
 
-  override suspend fun quickSearch(query: String): List<QuickSearchItem>
-  {
+  override suspend fun quickSearch(query: String): List<QuickSearchItem> {
     return if (query.isBlank()) {
       searchHistory.map { QuickSearchItem.Query(it, true) }
     }else{
@@ -88,20 +88,18 @@ class NekoirMain :
     }
   }
 
-  override suspend fun deleteQuickSearch(item: QuickSearchItem)
-  {
+  override suspend fun deleteQuickSearch(item: QuickSearchItem) {
     searchHistory -= item.title
   }
 
-  override suspend fun searchTabs(query: String): List<Tab>
-  {return listOf(Tab("tracks", "Tracks"), Tab("albums", "Albums"))}
+  override suspend fun searchTabs(query: String): List<Tab> {
+    return listOf(Tab("tracks", "Tracks"), Tab("albums", "Albums"))
+  }
 
-  override fun searchFeed
-  (
+  override fun searchFeed(
     query: String,
     tab: Tab?,
-  ): Feed
-  {
+  ): Feed {
     saveQueryToHistory(query)
 
     return when (tab?.id) {
@@ -113,34 +111,28 @@ class NekoirMain :
   // ---------------------------------------------------
 
   // Track Frag
-  override suspend fun loadTrack(track: Track): Track
-  {
+  override suspend fun loadTrack(track: Track): Track {
     return api.getTrack(track)
   }
 
-  override suspend fun loadStreamableMedia
-  (
+  override suspend fun loadStreamableMedia(
     streamable: Streamable,
     isDownload: Boolean,
-  ): Streamable.Media 
-  {
+  ): Streamable.Media {
     return api.getStreamableMedia(streamable)
   }
 
-  override fun getShelves(track: Track): PagedData<Shelf>
-  {
+  override fun getShelves(track: Track): PagedData<Shelf> {
     return PagedData.Single { emptyList() }
   }
   // --------------------------------------------------
   
   // Lyrics Frag
-  override fun searchTrackLyrics(clientId: String, track: Track): PagedData<Lyrics>
-  {
+  override fun searchTrackLyrics(clientId: String, track: Track): PagedData<Lyrics> {
     return api.getLyrics(track)
   }
 
-  override suspend fun loadLyrics(lyrics: Lyrics): Lyrics
-  {
+  override suspend fun loadLyrics(lyrics: Lyrics): Lyrics {
     return lyrics
   }
   // --------------------------------------------------

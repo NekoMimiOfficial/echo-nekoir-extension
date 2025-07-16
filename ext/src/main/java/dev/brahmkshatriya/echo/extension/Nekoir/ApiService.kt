@@ -40,8 +40,7 @@ private val DEFAULT_BODY: RequestBody = FormBody.Builder().build()
 
 const val TICKS_PER_MS = 10_000
 
-class ApiService (settings: Settings)
-{
+class ApiService (settings: Settings) {
   private val BASE_API= getBaseApi(settings)
 
   private val SEARCH_ENDPOINT: String= BASE_API+"search"
@@ -57,13 +56,11 @@ class ApiService (settings: Settings)
     .writeTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
     .build()
 
-  fun getResp
-  (
+  fun getResp(
     client: OkHttpClient,
     url: String,
     params: JsonObject?= null
-  ): Response
-  {
+  ): Response {
     val httpUrlBuilder= url.toHttpUrlOrNull()?.newBuilder()
       ?: throw IllegalArgumentException("Invalid URL: $url")
 
@@ -81,50 +78,44 @@ class ApiService (settings: Settings)
     return client.newCall(request).execute()
   }
 
-  fun search(query: String, qtype: String = "tracks"): String
-  {
+  fun search(query: String, qtype: String = "tracks"): String {
     val getParam= buildJsonObject{put("query", query); put("type", qtype)}
     val res= getResp(client, SEARCH_ENDPOINT, getParam)
-    val code= res.code
-    return res.body?.string() ?: "Some error occured: $code"
+    return res.body?.string() ?: "Some error occured: ${res.code}"
   }
 
-  fun track(track_id: String, track_quality: String): String
-  {
+  fun track(track_id: String, track_quality: String): String {
     val getParam= buildJsonObject { put("id", track_id); put("quality", track_quality) }
     val res= getResp(client, TRACK_ENDPOINT, getParam)
     return res.body?.string() ?: "Some error occured: ${res.code}"
   }
 
-  fun album(album_id: String): String
-  {
+  fun album(album_id: String): String {
     val getParam= buildJsonObject { put("id", album_id) }
     val res= getResp(client, ALBUM_ENDPOINT, getParam)
     return res.body?.string() ?: "Some error occured: ${res.code}"
   }
 
-  fun metadata(track_id: String): String
-  {
+  fun metadata(track_id: String): String {
     val getParam= buildJsonObject { put("id", track_id) }
     val res= getResp(client, META_ENDPOINT, getParam)
     return res.body?.string() ?: "Some error occured: ${res.code}"
   }
 
-  fun getLyrics(track: Track): PagedData<Lyrics>
-  {
+  fun getLyrics(track: Track): PagedData<Lyrics> {
     val track_id= track.id
     var lyrics= "Loading..."
     var getReq= metadata(track_id)
     var jabba= deserializeJsonStringToJsonObject(getReq)
-    while (jabba == null && getReq.contains("{\"detail\""))
-    {
+    while (jabba == null && getReq.contains("{\"detail\"")) {
       getReq= metadata(track_id)
       jabba= deserializeJsonStringToJsonObject(getReq)
     }
-    if (jabba != null)
-    {if (jabba.containsKey("LYRICS")){lyrics= jabba["LYRICS"]?.jsonPrimitive?.content ?: "Failed to load!"}}
+    if (jabba != null && jabba.containsKey("LYRICS")) {
+      lyrics= jabba["LYRICS"]?.jsonPrimitive?.content ?: "Failed to load!"
+    }
     val list: List<Lyrics.Item> = emptyList()
-    val retList= PagedData.Single{
+    val retList= PagedData.Single {
       listOf(
         Lyrics(
           id= "lyrics",
@@ -136,8 +127,7 @@ class ApiService (settings: Settings)
     return retList
   }
 
-  suspend fun getTrack(track: Track): Track
-  {
+  suspend fun getTrack(track: Track): Track {
     val bigCoverImgUrl= track.extras["image"] ?: "/"
     val thumb= ImageHolder.UriImageHolder(uri= bigCoverImgUrl, crop= false)
     val final_track= Track (
@@ -151,8 +141,7 @@ class ApiService (settings: Settings)
     return final_track
   }
 
-  suspend fun getStreamableMedia(streamable: Streamable): Streamable.Media
-  {
+  suspend fun getStreamableMedia(streamable: Streamable): Streamable.Media {
     var url: String = ""
     var qt: String = "LOSSLESS"
     // For now we will revert this as wtf does the API even spit?
@@ -163,16 +152,14 @@ class ApiService (settings: Settings)
     {getRequest= track(streamable.id, qt)}
     val trackJson: JsonObject? = deserializeJsonStringToJsonObject(getRequest)
 
-    if (trackJson != null)
-    {
+    if (trackJson != null) {
       val jsonArrayElement = trackJson["urls"]?.jsonArray
-      if (jsonArrayElement != null && jsonArrayElement.isNotEmpty())
-      {
+      if (jsonArrayElement != null && jsonArrayElement.isNotEmpty()) {
         val firstElementOfStringArray = jsonArrayElement[0].jsonPrimitive.content
         url= firstElementOfStringArray
         print(url)
-      }else{println("Track ID: ${streamable.id} has returned an empty request")}
-    }else{println("Track ID: ${streamable.id} has not returned a request")}
+      }
+    }
 
     return Streamable.Source.Http(
       request= url.toRequest(),

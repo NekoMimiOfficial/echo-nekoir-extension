@@ -8,8 +8,7 @@ import dev.brahmkshatriya.echo.common.models.EchoMediaItem.Companion.toMediaItem
 import dev.brahmkshatriya.echo.common.models.ImageHolder
 import dev.brahmkshatriya.echo.common.models.Album
 
-fun constructTrackItem
-(
+fun constructTrackItem(
   title: String,
   id: String,
   cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png",
@@ -17,14 +16,12 @@ fun constructTrackItem
   d_min: Int = 0,
   d_sec: Int = 39,
   artists: List<Artist> = emptyList(),
-): EchoMediaItem
-{
+): EchoMediaItem {
   val thumb= ImageHolder.UriImageHolder(uri= cover, crop= false)
   val duration = 1000 * ( 60 * d_min + d_sec )
   val streams: MutableList<Streamable> = mutableListOf()
 
-  for (quality in qualities)
-  {
+  for (quality in qualities) {
     var internal_quality: String = "Lossless"
     if (quality > 44100) {internal_quality= "HiRes Lossless"}
     val streamable= Streamable(id= id, title= internal_quality,
@@ -46,13 +43,11 @@ fun constructTrackItem
   return track.toMediaItem()
 }
 
-fun constructAlbumItem
-(
+fun constructAlbumItem(
   title: String,
   id: String,
   cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png"
-): EchoMediaItem.Lists.AlbumItem
-{
+): EchoMediaItem.Lists.AlbumItem {
   val thumb= ImageHolder.UriImageHolder(uri= cover, crop= false)
 
   return Album(

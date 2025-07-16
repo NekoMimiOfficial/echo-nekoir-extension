@@ -18,9 +18,6 @@ private val json = Json {
     prettyPrint = true
 }
 
-fun placeFn ()
-{return}
-
 fun randomString(length: Int = 16): String {
     val charPool = ('a'..'z') + ('0'..'9')
 
@@ -29,22 +26,6 @@ fun randomString(length: Int = 16): String {
             append(charPool.random())
         }
     }
-}
-
-fun String.getImageUrl(
-    serverUrl: String,
-    id: String,
-    name: String = "Primary",
-    index: Int? = null,
-): ImageHolder {
-    return serverUrl.toHttpUrl().newBuilder().apply {
-        addPathSegment("Items")
-        addPathSegment(id)
-        addPathSegment("Images")
-        addPathSegment(name)
-        index?.let { addPathSegment(it.toString()) }
-        addQueryParameter("tag", this@getImageUrl)
-    }.build().toString().toImageHolder(crop = true)
 }
 
 fun deserializeJsonStringToJsonObject(jsonString: String): JsonObject? {
