@@ -47,7 +47,10 @@ class UiBuilder {
           val arrayItemsFormats = jsonObject["formats"]?.jsonArray?.map {it.jsonPrimitive.content}
           if (arrayItemsFormats != null) {
             for (forma in arrayItemsFormats) {
-              if (forma.startsWith("HIRES")) { format.add(96000) } else { format.add(44100) }
+              if (forma.startsWith("HIRES")) { format.add(192000) } 
+              else if (forma.startsWith("LOSSLESS")) { format.add(114100); format.add(96000); format.add(32000) }
+              else if (forma.startsWith("HIGH")) { format.add(96000); format.add(32000) }
+              else { format.add(42) }
             }
           }
         }

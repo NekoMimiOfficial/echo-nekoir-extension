@@ -119,25 +119,16 @@ class ApiService (settings: Settings) {
   }
 
   suspend fun getTrack(track: Track): Track {
-    val bigCoverImgUrl = track.extras["image"] ?: "/"
-    val thumb = ImageHolder.UriImageHolder(uri = bigCoverImgUrl, crop = false)
-    val final_track = Track (
-      id = track.id,
-      title = track.title,
-      artists = track.artists,
-      duration = track.duration,
-      streamables = track.streamables,
-      cover = thumb
-    )
-    return final_track
+    return track
   }
 
   suspend fun getStreamableMedia(streamable: Streamable): Streamable.Media {
     var url: String = ""
-    var qt: String = "LOSSLESS"
+    var qt: String = "LOW"
+    if (streamable.quality == 96000) {qt = "HIGH"}
+    if (streamable.quality == 141100) {qt = "LOSSLESS"}
     // For now we will revert this as wtf does the API even spit?
-    // if (streamable.quality > 44100)
-    // {qt= "HI_RES_LOSSLESS"}
+    // if (streamable.quality == 192000) {qt = "HI_RES_LOSSLESS"}
     var getRequest = track(streamable.id, qt)
     while (getRequest.contains("detail") || getRequest.contains("[]")) {
       getRequest = track(streamable.id, qt)

@@ -5,7 +5,7 @@ import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.common.models.Streamable
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem.Companion.toMediaItem
-import dev.brahmkshatriya.echo.common.models.ImageHolder
+import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toImageHolder
 import dev.brahmkshatriya.echo.common.models.Album
 
 fun constructTrackItem(
@@ -17,13 +17,16 @@ fun constructTrackItem(
   d_sec: Int = 39,
   artists: List<Artist> = emptyList(),
 ): EchoMediaItem {
-  val thumb= ImageHolder.UriImageHolder(uri= cover, crop= false)
+  val thumb= cover.replace("80x80.", "640x640.").toImageHolder()
   val duration = 1000 * ( 60 * d_min + d_sec )
   val streams: MutableList<Streamable> = mutableListOf()
 
   for (quality in qualities) {
-    var internal_quality: String = "Lossless"
-    if (quality > 44100) {internal_quality= "HiRes Lossless"}
+    var internal_quality: String = "Other Qualtiy"
+    if (quality == 192000) {internal_quality= "Master (HiRes Lossless)"}
+    if (quality == 114100) {internal_quality= "HiFi (Lossless)"}
+    if (quality == 96000) {internal_quality= "High (320kbps)"}
+    if (quality == 32000) {internal_quality= "Low (96kbps)"}
     val streamable= Streamable(id= id, title= internal_quality,
       type= Streamable.MediaType.Server, quality= quality)
 
@@ -37,7 +40,6 @@ fun constructTrackItem(
     duration = duration.toLong(),
     cover = thumb,
     streamables = streams,
-    extras = mapOf( Pair("image", cover.replace("80x80.", "1280x1280.")) )
   )
 
   return track.toMediaItem()
@@ -48,7 +50,7 @@ fun constructAlbumItem(
   id: String,
   cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png"
 ): EchoMediaItem.Lists.AlbumItem {
-  val thumb = ImageHolder.UriImageHolder(uri= cover, crop= false)
+  val thumb = cover.toImageHolder()
 
   return Album(
     title = title,
