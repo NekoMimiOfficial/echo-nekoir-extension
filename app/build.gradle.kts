@@ -84,6 +84,7 @@ android {
     buildTypes {
         all {
             isMinifyEnabled = true
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 generatedProguard.absolutePath
