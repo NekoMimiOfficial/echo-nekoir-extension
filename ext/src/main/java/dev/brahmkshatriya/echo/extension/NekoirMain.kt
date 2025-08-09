@@ -39,7 +39,7 @@ class NekoirMain :
 
   val setting_base_api= SettingTextInput(title= "Echoir API URL", key= "bapi64")
 
-  override val settingItems: List<Setting> = listOf(setting_base_api)
+  override suspend fun getSettingItems(): List<Setting> = listOf(setting_base_api)
 
   private lateinit var setting: Settings
 
@@ -57,11 +57,7 @@ class NekoirMain :
   // ---------------------------------------------------
 
   // Home Feed Frag
-  override suspend fun getHomeTabs(): List<Tab> {
-    return emptyList()
-  }
-
-  override fun getHomeFeed(tab: Tab?): Feed {
+  override suspend fun loadHomeFeed(): Feed<Shelf> {
     return createHomeFeed(setting)
   }
   // ---------------------------------------------------
@@ -80,29 +76,13 @@ class NekoirMain :
     searchHistory = history
   }
 
-  override suspend fun quickSearch(query: String): List<QuickSearchItem> {
-    return if (query.isBlank()) {
-      searchHistory.map { QuickSearchItem.Query(it, true) }
-    }else{
-      emptyList()
-    }
-  }
-
-  override suspend fun deleteQuickSearch(item: QuickSearchItem) {
-    searchHistory -= item.title
-  }
-
-  override suspend fun searchTabs(query: String): List<Tab> {
-    return listOf(Tab("tracks", "Tracks"), Tab("albums", "Albums"))
-  }
-
-  override fun searchFeed(
+  override suspend fun loadSearchFeed(
     query: String,
-    tab: Tab?,
-  ): Feed {
+  ): Feed<Shelf> {
     saveQueryToHistory(query)
 
-    return when (tab?.id) {
+    // replace this with a unified search
+    return when ("tracks") {
       "tracks" -> searchTrack(query, setting)
       "albums" -> searchAlbum(query, setting)
       else -> throw IllegalArgumentException("Invalid search tab")
@@ -111,7 +91,7 @@ class NekoirMain :
   // ---------------------------------------------------
 
   // Track Frag
-  override suspend fun loadTrack(track: Track): Track {
+  override suspend fun loadTrack(track: Track, isDownload: Boolean): Track {
     return api.getTrack(track)
   }
 
@@ -122,14 +102,16 @@ class NekoirMain :
     return api.getStreamableMedia(streamable)
   }
 
-  override fun getShelves(track: Track): PagedData<Shelf> {
-    return PagedData.Single { emptyList() }
-  }
+  override suspend fun loadFeed(track: Track): Feed<Shelf>? {return null;}
+
   // --------------------------------------------------
   
   // Lyrics Frag
-  override fun searchTrackLyrics(clientId: String, track: Track): PagedData<Lyrics> {
-    return api.getLyrics(track)
+  override suspend fun searchTrackLyrics(
+    clientId: String,
+    track: Track
+  ): Feed<Lyrics> {
+    return api.getLyrics(clientId, track)
   }
 
   override suspend fun loadLyrics(lyrics: Lyrics): Lyrics {

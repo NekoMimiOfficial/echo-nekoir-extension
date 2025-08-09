@@ -11,14 +11,14 @@ import dev.brahmkshatriya.echo.extension.UiBuilder
 
 val ui = UiBuilder()
 
-fun createHomeFeed(settings: Settings): Feed {
+suspend fun createHomeFeed(settings: Settings): Feed<Shelf> {
   return PagedData.Single{ ui.getRandomShelves(settings) }.toFeed()
 }
 
-fun searchTrack(query: String, settings: Settings): Feed {
+suspend fun searchTrack(query: String, settings: Settings): Feed<Shelf> {
   return PagedData.Single{ ui.getSearchHor(query, settings) }.toFeed()
 }
 
-fun searchAlbum(query: String, settings: Settings): Feed {
+fun searchAlbum(query: String, settings: Settings): Feed<Shelf> {
   return PagedData.Single{ ui.getSearchHor(query, settings) }.toFeed()
 }

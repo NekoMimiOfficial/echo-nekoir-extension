@@ -4,7 +4,6 @@ import dev.brahmkshatriya.echo.common.models.Artist
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.common.models.Streamable
-import dev.brahmkshatriya.echo.common.models.EchoMediaItem.Companion.toMediaItem
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toImageHolder
 import dev.brahmkshatriya.echo.common.models.Album
 
@@ -42,19 +41,19 @@ fun constructTrackItem(
     streamables = streams,
   )
 
-  return track.toMediaItem()
+  return track
 }
 
 fun constructAlbumItem(
   title: String,
   id: String,
   cover: String = "http://nekomimi.tilde.team/pool/05/missingno.png"
-): EchoMediaItem.Lists.AlbumItem {
+): EchoMediaItem {
   val thumb = cover.toImageHolder()
 
   return Album(
     title = title,
     id = id,
     cover = thumb
-  ).toMediaItem()
+  )
 }

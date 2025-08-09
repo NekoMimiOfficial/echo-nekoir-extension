@@ -5,9 +5,7 @@ import dev.brahmkshatriya.echo.common.models.Artist
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.common.models.Streamable
-import dev.brahmkshatriya.echo.common.models.EchoMediaItem.Companion.toMediaItem
 import dev.brahmkshatriya.echo.common.models.ImageHolder
-import dev.brahmkshatriya.echo.common.models.Request.Companion.toRequest
 import dev.brahmkshatriya.echo.extension.Nekoir.constructTrackItem
 import dev.brahmkshatriya.echo.extension.Nekoir.ApiService
 import dev.brahmkshatriya.echo.extension.Screens.searchTrack
@@ -23,7 +21,7 @@ import kotlin.collections.emptyList
 import kotlin.collections.listOf
 
 class UiBuilder {
-  fun itemGetter(term: String, settings: Settings, force: Boolean = false): List<EchoMediaItem> {
+  suspend fun itemGetter(term: String, settings: Settings, force: Boolean = false): List<EchoMediaItem> {
     val api = ApiService(settings)
     var searchReq = api.search(term)
     var items: MutableList<EchoMediaItem> = mutableListOf()
@@ -73,15 +71,20 @@ class UiBuilder {
     return items
   }
 
-  fun getSearchFeedFor(term: String, settings: Settings, ident: String = "Search results for:", force: Boolean = false): Shelf {
+  suspend fun getSearchFeedFor(term: String, settings: Settings, ident: String = "Search results for:", force: Boolean = false): Shelf {
     val items = itemGetter(term, settings, force)
     return Shelf.Lists.Items(
+      id= randomString(8),
       title = "$ident $term",
       list = items
     )
   }
 
-  fun getSearchHor(term: String, settings: Settings, force: Boolean = false): List<Shelf> {
+  suspend fun getSearchHor(term: String, settings: Settings, force: Boolean = false): List<Shelf> {
+    if (term == "") {
+      val emptyHolder: List<Shelf> = emptyList()
+      return emptyHolder
+    }
     var horter: MutableList<Shelf> = mutableListOf()
     val items = itemGetter(term, settings, force)
     for (item in items) {
@@ -91,7 +94,7 @@ class UiBuilder {
   }
 
 
-  fun getRandomShelves(settings: Settings): List<Shelf> {
+  suspend fun getRandomShelves(settings: Settings): List<Shelf> {
     val eastern: List<String> = listOf(
       "YOASOBI",
       "ZUTOMAYO",
