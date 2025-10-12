@@ -40,7 +40,7 @@ jobs:
           ./gradlew assembleDebug \
           -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
           -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=key0 \
+          -Pandroid.injected.signing.key.alias="my-app-key" \
           -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
           
           cp app/build/outputs/apk/debug/app-debug.apk ${{ env.APP_PATH }}
