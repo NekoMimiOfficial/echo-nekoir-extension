@@ -14,6 +14,5 @@ fun createDummyTrack(id: String = "dummy_track_id", title: String = "Dummy Track
         artists = listOf(Artist(id = "dummy_artist_id", name = "Dummy Artist")),
         album = Album(id = "dummy_album_id", title = "Dummy Album"),
         duration = 180000L, // 3 minutes in milliseconds
-        isLiked = false,
     )
 }

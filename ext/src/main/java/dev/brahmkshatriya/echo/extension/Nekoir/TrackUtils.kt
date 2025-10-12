@@ -16,7 +16,7 @@ fun constructTrackItem(
   d_sec: Int = 39,
   artists: List<Artist> = emptyList(),
 ): EchoMediaItem {
-  val thumb= cover.replace("80x80.", "640x640.").toImageHolder()
+  val thumb= cover.toImageHolder()
   val duration = 1000 * ( 60 * d_min + d_sec )
   val streams: MutableList<Streamable> = mutableListOf()
 

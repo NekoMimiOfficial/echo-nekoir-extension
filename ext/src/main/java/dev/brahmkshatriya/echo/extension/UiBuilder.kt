@@ -16,59 +16,170 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.decodeFromString
 import kotlin.collections.mutableListOf
 import kotlin.collections.emptyList
 import kotlin.collections.listOf
+import kotlinx.coroutines.delay
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.JsonPrimitive
+
+@Serializable
+data class TrackSearchResponse(
+  val limit: Int,
+  val offset: Int,
+  val totalNumberOfItems: Int,
+  val items: List<TrackItem>
+)
+
+@Serializable
+data class TrackItem(
+  val id: Long,
+  val title: String,
+  val duration: Int,
+  val version: String? = null,
+  val popularity: Int,
+  val copyright: String,
+  val url: String,
+  val isrc: String,
+  val audioQuality: String,
+  val album: AlbumInfo,
+)
+
+@Serializable
+data class AlbumInfo(
+  val id: Long,
+  val title: String,
+  val cover: String,
+  val videoCover: String?
+)
+
+// class UiBuilder {
+//   suspend fun itemGetter(term: String, settings: Settings, force: Boolean = false): List<EchoMediaItem> {
+//     val api = ApiService(settings)
+//     var searchReq = api.search(term)
+//     var items: MutableList<EchoMediaItem> = mutableListOf()
+//
+//     while (searchReq.contains("{\"detail\"") || force && searchReq.contains("[]")) {
+//       searchReq= api.search(term)
+//     }
+//
+//     val reqJson: List<JsonObject>? = deserializeJsonStringToListOfJsonObjects(searchReq)
+//
+//     reqJson?.let { list ->
+//       list.forEach { jsonObject ->
+//         var format: MutableList<Int> = mutableListOf()
+//
+//         val title = safeGet("title", jsonObject)
+//         val cover = safeGet("cover", jsonObject, "http://nekomimi.tilde.team/pool/05/missingno")
+//         val id = safeGet("id", jsonObject)
+//         val duration = safeGet("duration", jsonObject, "0:39")
+//
+//         if (jsonObject.containsKey("formats")) {
+//           val arrayItemsFormats = jsonObject["formats"]?.jsonArray?.map {it.jsonPrimitive.content}
+//           if (arrayItemsFormats != null) {
+//             for (forma in arrayItemsFormats) {
+//               if (forma.startsWith("HIRES")) { format.add(192000) } 
+//               else if (forma.startsWith("LOSSLESS")) { format.add(114100); format.add(96000); format.add(32000) }
+//               else if (forma.startsWith("HIGH")) { format.add(96000); format.add(32000) }
+//               else { format.add(42) }
+//             }
+//           }
+//         }
+//
+//         val time_m = duration.split(":")[0].toInt()
+//         val time_s = duration.split(":")[1].toInt()
+//         items.add(
+//           constructTrackItem(
+//             title,
+//             id,
+//             cover,
+//             format,
+//             time_m,
+//             time_s
+//           )
+//         )
+//       }
+//     }
+//
+//     return items
+//   }
 
 class UiBuilder {
+
+  private val json = Json { ignoreUnknownKeys = true }
+
   suspend fun itemGetter(term: String, settings: Settings, force: Boolean = false): List<EchoMediaItem> {
     val api = ApiService(settings)
-    var searchReq = api.search(term)
-    var items: MutableList<EchoMediaItem> = mutableListOf()
+    var trackResponse: TrackSearchResponse? = null
 
-    while (searchReq.contains("{\"detail\"") || force && searchReq.contains("[]")) {
-      searchReq= api.search(term)
-    }
+    do {
+      val responseString = api.search(term)
 
-    val reqJson: List<JsonObject>? = deserializeJsonStringToListOfJsonObjects(searchReq)
+      val isErrorResponse = responseString.startsWith("Some error occured:")
 
-    reqJson?.let { list ->
-      list.forEach { jsonObject ->
-        var format: MutableList<Int> = mutableListOf()
+      val isFailureMessage = responseString.contains("{\"detail\"") || isErrorResponse
+      val isSuccess = !isFailureMessage
 
-        val title = safeGet("title", jsonObject)
-        val cover = safeGet("cover", jsonObject, "http://nekomimi.tilde.team/pool/05/missingno")
-        val id = safeGet("id", jsonObject)
-        val duration = safeGet("duration", jsonObject, "0:39")
-
-        if (jsonObject.containsKey("formats")) {
-          val arrayItemsFormats = jsonObject["formats"]?.jsonArray?.map {it.jsonPrimitive.content}
-          if (arrayItemsFormats != null) {
-            for (forma in arrayItemsFormats) {
-              if (forma.startsWith("HIRES")) { format.add(192000) } 
-              else if (forma.startsWith("LOSSLESS")) { format.add(114100); format.add(96000); format.add(32000) }
-              else if (forma.startsWith("HIGH")) { format.add(96000); format.add(32000) }
-              else { format.add(42) }
-            }
-          }
+      if (isSuccess) {
+        trackResponse = try {
+          json.decodeFromString<TrackSearchResponse>(responseString)
+        } catch (e: Exception) {
+          println("Error parsing search response: ${e.message}")
+          null
         }
 
-        val time_m = duration.split(":")[0].toInt()
-        val time_s = duration.split(":")[1].toInt()
-        items.add(
-          constructTrackItem(
-            title,
-            id,
-            cover,
-            format,
-            time_m,
-            time_s
-          )
-        )
+        if (trackResponse != null && trackResponse.items.isNotEmpty()) {
+          break
+        }
       }
-    }
 
-    return items
+      val shouldRetry = force || isFailureMessage || trackResponse == null || trackResponse.items.isEmpty()
+
+      if (!shouldRetry) {
+        return emptyList()
+      }
+
+      delay(200)
+
+    } while (true)
+
+    return trackResponse?.items?.map { item ->
+      val id = item.id.toString()
+
+      var cover = item.album.cover
+      cover = cover.replace("-", "/") ?: "http://nekomimi.tilde.team/pool/05/missingno.png"
+
+      val format: MutableList<Int> = mutableListOf()
+      when (item.audioQuality.uppercase()) {
+        "HIRES" -> format.add(192000)
+        "LOSSLESS" -> {
+          format.add(114100)
+            format.add(96000)
+              format.add(32000)
+        }
+        "HIGH" -> {
+          format.add(96000)
+            format.add(32000)
+        }
+        else -> format.add(42)
+      }
+
+      val durationSeconds = item.duration
+      val time_m = durationSeconds / 60
+      val time_s = durationSeconds % 60
+
+      constructTrackItem(
+        item.title,
+        id,
+        "https://resources.tidal.com/images/${cover}/640x640.jpg",
+        format,
+          time_m,
+          time_s
+      )
+    } ?: emptyList()
   }
 
   suspend fun getSearchFeedFor(term: String, settings: Settings, ident: String = "Search results for:", force: Boolean = false): Shelf {

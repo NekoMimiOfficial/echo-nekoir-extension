@@ -37,7 +37,7 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew assembleDebug \
           -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
           -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
           -Pandroid.injected.signing.key.alias=key0 \
@@ -58,3 +58,12 @@ jobs:
           body_path: commit.txt
           name: ${{ env.VERSION }}
           files: ${{ env.APP_PATH }}
+
+      - name: Delete Old Releases
+        uses: sgpublic/delete-release-action@master
+        with:
+          release-drop: true
+          release-keep-count: 2
+          release-drop-tag: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

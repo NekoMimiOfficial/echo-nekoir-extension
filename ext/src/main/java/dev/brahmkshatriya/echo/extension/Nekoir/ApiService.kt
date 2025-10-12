@@ -34,18 +34,116 @@ import dev.brahmkshatriya.echo.extension.safeGet
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.decodeFromJsonElement
+
+@Serializable
+data class MediaMetadata(
+    val tags: List<String>
+)
+
+@Serializable
+data class ArtistInfo(
+    val id: Long,
+    val name: String,
+    val handle: String? = null,
+    val type: String,
+    val picture: String? = null // Picture can sometimes be null or omitted
+)
+
+@Serializable
+data class AlbumDetailInfo(
+    val id: Long,
+    val title: String,
+    val cover: String,
+    val vibrantColor: String? = null,
+    val videoCover: String? = null
+)
+
+@Serializable
+data class Mixes(
+    // Use @SerialName to map the Kotlin field name to the uppercase JSON key
+    @SerialName("TRACK_MIX")
+    val trackMix: String
+)
+
+// --- Main Track Metadata Object (Index 0) ---
+
+@Serializable
+data class TrackDetailResponse(
+    val id: Long,
+    val title: String,
+    val duration: Int, // in seconds
+    val replayGain: Double,
+    val peak: Double,
+    val allowStreaming: Boolean,
+    val streamReady: Boolean,
+    val payToStream: Boolean,
+    val adSupportedStreamReady: Boolean,
+    val djReady: Boolean,
+    val stemReady: Boolean,
+    val streamStartDate: String,
+    val premiumStreamingOnly: Boolean,
+    val trackNumber: Int,
+    val volumeNumber: Int,
+    val version: String? = null,
+    val popularity: Int,
+    val copyright: String,
+    val bpm: Int,
+    val url: String,
+    val isrc: String,
+    val editable: Boolean,
+    val explicit: Boolean,
+    val audioQuality: String,
+    val audioModes: List<String>,
+    val mediaMetadata: MediaMetadata,
+    val upload: Boolean,
+    val accessType: String,
+    val spotlighted: Boolean,
+    val artist: ArtistInfo,
+    val artists: List<ArtistInfo>,
+    val album: AlbumDetailInfo,
+    val mixes: Mixes
+)
+
+// --- Asset/Manifest Object (Index 1) ---
+
+@Serializable
+data class AssetManifest(
+    val trackId: Long,
+    val assetPresentation: String,
+    val audioMode: String,
+    val audioQuality: String,
+    val manifestMimeType: String,
+    val manifestHash: String,
+    val manifest: String,
+    val albumReplayGain: Double,
+    val albumPeakAmplitude: Double,
+    val trackReplayGain: Double,
+    val trackPeakAmplitude: Double,
+    val bitDepth: Int,
+    val sampleRate: Int
+)
+
+// --- URL Container Object (Index 2) ---
+
+@Serializable
+data class OriginalTrackUrlContainer(
+    @SerialName("OriginalTrackUrl")
+    val originalTrackUrl: String
+)
 
 const val TICKS_PER_MS = 10_000
 
 class ApiService (settings: Settings) {
   private val BASE_API = getBaseApi(settings)
 
-  private val SEARCH_ENDPOINT: String = BASE_API + "search"
-  private val TRACK_ENDPOINT: String = BASE_API + "track/playback"
+  private val SEARCH_ENDPOINT: String = BASE_API + "search/"
+  private val TRACK_ENDPOINT: String = BASE_API + "track/"
   private val ALBUM_ENDPOINT: String = BASE_API + "album/tracks"
   private val META_ENDPOINT: String = BASE_API + "track/metadata"
-
-  private val HEADERS = Headers.headersOf("User-Agent", "ktor-client", "X-App-Version", "1.8")
 
   val client = OkHttpClient.Builder()
     .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
@@ -85,7 +183,6 @@ class ApiService (settings: Settings) {
     val finalUrl = httpUrlBuilder.build()
 
     val request = Request.Builder()
-      .headers(HEADERS)
       .url(finalUrl)
       .get()
       .build()
@@ -93,28 +190,46 @@ class ApiService (settings: Settings) {
     return client.newCall(request).await()
   }
 
+  // suspend fun postResp(
+  //   client: OkHttpClient,
+  //   url: String,
+  //   params: JsonObject? = null
+  // ): Response {
+  //   val JSON = "application/json; charset=utf-8".toMediaType()
+  //
+  //   val requestBody = params?.toString()?.toRequestBody(JSON) ?: RequestBody.create(null, ByteArray(0))
+  //
+  //   val request = Request.Builder()
+  //     .headers(HEADERS)
+  //     .url(url)
+  //     .post(requestBody)
+  //     .build()
+  //
+  //   return client.newCall(request).await()
+  // }
+
   suspend fun search(query: String, qtype: String = "tracks"): String {
-    val getParam = buildJsonObject{put("query", query); put("type", qtype)}
+    val getParam = buildJsonObject{put("s", query)}
     val res = getResp(client, SEARCH_ENDPOINT, getParam)
-    return res.body?.string() ?: "Some error occured: ${res.code}"
+    return res.body.string()
   }
 
   suspend fun track(track_id: String, track_quality: String): String {
     val getParam = buildJsonObject { put("id", track_id); put("quality", track_quality) }
     val res = getResp(client, TRACK_ENDPOINT, getParam)
-    return res.body?.string() ?: "Some error occured: ${res.code}"
+    return res.body.string()
   }
 
   suspend fun album(album_id: String): String {
     val getParam = buildJsonObject { put("id", album_id) }
     val res = getResp(client, ALBUM_ENDPOINT, getParam)
-    return res.body?.string() ?: "Some error occured: ${res.code}"
+    return res.body.string()
   }
 
   suspend fun metadata(track_id: String): String {
     val getParam = buildJsonObject { put("id", track_id) }
     val res = getResp(client, META_ENDPOINT, getParam)
-    return res.body?.string() ?: "Some error occured: ${res.code}"
+    return res.body.string()
   }
 
   suspend fun getLyrics(clientId: String, track: Track): Feed<Lyrics> {
@@ -178,14 +293,24 @@ class ApiService (settings: Settings) {
     while (getRequest.contains("detail") || getRequest.contains("[]")) {
       getRequest = track(streamable.id, qt)
     }
-    val trackJson: JsonObject ?= deserializeJsonStringToJsonObject(getRequest)
+    val json = Json { ignoreUnknownKeys = true }
 
-    if (trackJson != null) {
-      val jsonArrayElement = trackJson["urls"]?.jsonArray
-      if (jsonArrayElement != null && jsonArrayElement.isNotEmpty()) {
-        url = jsonArrayElement[0].jsonPrimitive.content
-        println(url)
-      }
+    val responseString = track(streamable.id, qt)
+
+    try {
+        val jsonList = json.decodeFromString<List<JsonObject>>(responseString)
+
+        if (jsonList.size != 3) {
+            println("Unexpected number of objects in the track response.")
+        }
+
+        val trackUrlContainer = json.decodeFromJsonElement<OriginalTrackUrlContainer>(jsonList[2])
+        
+        url = trackUrlContainer.originalTrackUrl
+        println("URL: ${trackUrlContainer.originalTrackUrl}")
+
+    } catch (e: Exception) {
+        println("Failed to process track response: ${e.message}")
     }
 
     return Streamable.Source.Http(
